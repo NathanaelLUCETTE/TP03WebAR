@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>TP03 - Exercice 1 - Scène VR</title>
+  <!-- A-Frame : le framework principal -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <!-- aframe-extras nous donne le composant "movement-controls" tout fait,
+       qui gère le déplacement au joystick gauche sans qu'on ait à coder
+       la lecture du gamepad nous-mêmes -->
+  <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
+</head>
+<body>
+
+<script>
+  /**
+   * Composant custom : joystick-turn
+   * ---------------------------------
+   * A-Frame/aframe-extras ne fournit pas nativement la rotation à la
+   * manette (le "smooth turn" du joystick droit), donc on l'écrit nous-mêmes.
+   *
+   * Principe :
+   * - On place ce composant SUR l'entité de la main droite.
+   * - Chaque manette VR émet un événement "axismove" quand on bouge son
+   *   joystick. detail.axis contient [x, y] pour CETTE manette précise.
+   * - On récupère x (gauche/droite) et on fait tourner le "rig" (le
+   *   conteneur parent qui porte le joueur) autour de son axe Y.
+   */
+  AFRAME.registerComponent('joystick-turn', {
+    schema: {
+      speed: { default: 90 },   // vitesse de rotation en degrés/seconde
+      deadzone: { default: 0.2 } // zone morte pour éviter les dérives du joystick au repos
+    },
+    init: function () {
+      this.turnAmount = 0;
+      this.rig = document.querySelector('#rig');
+
+      this.el.addEventListener('axismove', (evt) => {
+        var x = evt.detail.axis[0];
+        this.turnAmount = Math.abs(x) > this.data.deadzone ? x : 0;
+      });
+    },
+    tick: function (time, deltaTime) {
+      if (this.turnAmount !== 0 && this.rig) {
+        var dt = deltaTime / 1000;
+        var radians = (this.data.speed * this.turnAmount * dt) * (Math.PI / 180);
+        this.rig.object3D.rotation.y -= radians;
+      }
+    }
+  });
+</script>
+
+<a-scene>
+
+  <a-assets></a-assets>
+
+  <!-- ===== SOL ===== -->
+  <!-- shadow="receive: true" : ce plan pourra afficher les ombres projetées dessus -->
+  <a-plane
+    position="0 0 0"
+    rotation="-90 0 0"
+    width="20"
+    height="20"
+    color="#7BC8A4"
+    shadow="receive: true">
+  </a-plane>
+
+  <!-- ===== OBJETS 3D ===== -->
+  <!-- cast: true -> projette une ombre / receive: true -> peut recevoir une ombre -->
+  <a-box
+    position="-1 0.5 -3"
+    color="#4CC3D9"
+    shadow="cast: true; receive: true">
+  </a-box>
+
+  <a-sphere
+    position="1 1.25 -5"
+    radius="1.25"
+    color="#EF2D5E"
+    shadow="cast: true; receive: true">
+  </a-sphere>
+
+  <!-- ===== LUMIÈRES ===== -->
+  <!-- Directionnelle : simule le soleil, crée des ombres nettes.
+       castShadow="true" est indispensable pour qu'elle génère des ombres -->
+  <a-light
+    type="directional"
+    position="-1 3 1"
+    intensity="0.8"
+    light="castShadow: true">
+  </a-light>
+
+  <!-- Ambiante : éclaire toute la scène uniformément, sans ombre,
+       pour éviter que les zones non éclairées par la directionnelle
+       soient totalement noires -->
+  <a-light type="ambient" color="#BBBBBB" intensity="0.6"></a-light>
+
+  <!-- ===== RIG DU JOUEUR =====
+       Le "rig" est l'entité qu'on déplace réellement dans la scène.
+       La caméra et les mains sont ses ENFANTS : quand le rig bouge,
+       tout ce qu'il contient bouge avec lui (tête + mains). -->
+  <a-entity
+    id="rig"
+    position="0 0 3"
+    movement-controls="speed: 0.15; camera: #head; controls: gamepad">
+
+    <!-- La caméra = les yeux du joueur, à hauteur d'humain (1.6m) -->
+    <a-entity id="head" camera look-controls position="0 1.6 0"></a-entity>
+
+    <!-- Contrôleur gauche : joystick gauche = déplacement
+         (géré automatiquement par movement-controls ci-dessus) -->
+    <a-entity
+      id="leftHand"
+      hand-controls="hand: left"
+      oculus-touch-controls="hand: left">
+    </a-entity>
+
+    <!-- Contrôleur droit : joystick droit = rotation de la vue
+         (géré par notre composant custom joystick-turn) -->
+    <a-entity
+      id="rightHand"
+      hand-controls="hand: right"
+      oculus-touch-controls="hand: right"
+      joystick-turn>
+    </a-entity>
+
+  </a-entity>
+
+</a-scene>
+</body>
+</html>
