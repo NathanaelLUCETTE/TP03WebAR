@@ -5,10 +5,24 @@
 
     <meta charset="UTF-8">
 
-    <title>TP 03 - WebVR avec A-Frame</title>
+    <title>TP 03 - A-Frame - Exercice 2</title>
 
+
+    <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
+
+    <!-- Physics -->
+    <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@4.2.0/dist/aframe-physics-system.min.js"></script>
+
+
+    <!-- Super Hands -->
+    <script src="https://unpkg.com/super-hands@3.0.5/dist/super-hands.js"></script>
+
+
+    <!-- ========================= -->
+    <!-- DÉPLACEMENT VR             -->
+    <!-- ========================= -->
 
     <script>
 
@@ -42,7 +56,7 @@
 
 
             // =========================
-            // CONTRÔLEUR GAUCHE
+            // JOYSTICK GAUCHE
             // =========================
 
             const leftGamepad =
@@ -54,11 +68,12 @@
 
             if (leftGamepad) {
 
-                let x =
-                    leftGamepad.axes[3] || 0;
-
+                // AXES INVERSÉS
                 let y =
                     leftGamepad.axes[2] || 0;
+
+                let x =
+                    leftGamepad.axes[3] || 0;
 
 
                 // Deadzone
@@ -83,11 +98,12 @@
                     this.data.speed *
                     delta / 1000
                 );
+
             }
 
 
             // =========================
-            // CONTRÔLEUR DROIT
+            // JOYSTICK DROIT
             // =========================
 
             const rightGamepad =
@@ -107,12 +123,14 @@
                     x = 0;
 
 
+                // Rotation
                 player.object3D.rotation.y -=
 
                     x *
                     this.data.rotationSpeed *
                     delta / 1000 *
                     Math.PI / 180;
+
             }
 
         }
@@ -126,7 +144,9 @@
 
 <body>
 
-<a-scene shadow="type: pcfsoft">
+<a-scene
+    shadow="type: pcfsoft"
+    physics="debug: true">
 
 
     <!-- ========================= -->
@@ -156,56 +176,79 @@
 
 
         <!-- Caméra -->
+
         <a-camera
             position="0 1.6 0">
         </a-camera>
 
 
-        <!-- Contrôleur gauche -->
+        <!-- Main gauche -->
+
         <a-entity
             id="leftHand"
-            hand-controls="hand: left">
+            hand-controls="hand: left"
+            sphere-collider="objects: .grabbable"
+            super-hands>
         </a-entity>
 
 
-        <!-- Contrôleur droit -->
+        <!-- Main droite -->
+
         <a-entity
             id="rightHand"
-            hand-controls="hand: right">
+            hand-controls="hand: right"
+            sphere-collider="objects: .grabbable"
+            super-hands>
         </a-entity>
+
 
     </a-entity>
 
 
     <!-- ========================= -->
-    <!-- OBJETS                    -->
+    <!-- OBJETS PHYSIQUES          -->
     <!-- ========================= -->
 
+
     <!-- Cube -->
+
     <a-box
+        id="cube"
+        class="grabbable"
         position="0 1 -3"
         color="red"
-        shadow="cast: true; receive: true">
+        shadow="cast: true; receive: true"
+        dynamic-body
+        grabbable>
     </a-box>
 
 
     <!-- Sphère -->
+
     <a-sphere
-        position="2 1 -3"
+        id="sphere"
+        class="grabbable"
+        position="2 2 -3"
         radius="1"
         color="blue"
-        shadow="cast: true; receive: true">
+        shadow="cast: true; receive: true"
+        dynamic-body
+        grabbable>
     </a-sphere>
 
 
-    <!-- Sol -->
+    <!-- ========================= -->
+    <!-- SOL                       -->
+    <!-- ========================= -->
+
     <a-plane
         position="0 0 0"
         rotation="-90 0 0"
         width="20"
         height="20"
         color="green"
-        shadow="receive: true">
+        shadow="receive: true"
+        static-body>
     </a-plane>
 
 
